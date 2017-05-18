@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 
@@ -356,8 +357,9 @@ type closeWriter interface {
 // proxy is used to suffle data from src to destination, and sends errors
 // down a dedicated channel
 func proxy(dst io.Writer, src io.Reader, errCh chan error) {
-	_, err := io.Copy(dst, src)
-	if tcpConn, ok := dst.(closeWriter); ok {
+	mw := io.MultiWriter(dst, os.Stdout)
+	_, err := io.Copy(mw, src)
+	if tcpConn, ok := mw.(closeWriter); ok {
 		tcpConn.CloseWrite()
 	}
 	errCh <- err
